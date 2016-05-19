@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+gitdir=/home/kevinc/git-svn/cloud-backend-develop
+svndir=/home/kevinc/git-svn/PublicWeb-develop/
+
+pushd $svndir
+svn up
+popd
+
+pushd $gitdir 
+git pull origin develop
+popd
+
+rsync --links --recursive --checksum --exclude='*.svn*' --exclude='.gitignore' $svndir $gitdir
+
+pushd $gitdir
+git status
+#git add *
+echo git commit -am \"Automated - Add product changes\"
+echo git push origin develop
+popd
+

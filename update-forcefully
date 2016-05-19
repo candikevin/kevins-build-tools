@@ -1,0 +1,27 @@
+#!/bin/bash
+
+pushd cloud-backend-develop
+git pull origin develop
+popd
+
+pushd cloud-backend-release-3.4
+git pull origin release/3.4
+popd
+
+pushd PublicWeb-develop
+svn rm *
+time svn commit -m "removing all code so it can be replaced by git develop"
+cp -R ../cloud-backend-develop/* .
+svn add *
+time svn commit -m "adding all code from git develop"
+popd
+
+exit
+
+pushd PublicWeb-release-3.4
+svn rm *
+time svn commit -m "removing all code so it can be replaced by git release/3.4"
+cp -R ../cloud-backend-release-3.4/* .
+svn add *
+time svn commit -m "adding all code from git release/3.4"
+popd

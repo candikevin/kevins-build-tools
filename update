@@ -1,0 +1,66 @@
+#!/bin/bash
+
+echo "Updating git-svn..."
+date
+
+pushd /home/kevinc/git-svn
+
+pushd candi_powertools_app
+    npm install
+    git stash
+    git pull
+    git stash pop
+    npm run build-prod
+
+    # update commit hash
+    powertools_rev=$(git rev-parse --short HEAD)
+    date=$(git log -1 | grep Date)
+    echo "<!-- candicontrols/candi_powertools_app master $powertools_rev $date -->" \
+        >> build/index.html
+popd
+
+for branch in develop release-3.4; do
+    pushd cloud-backend-$branch
+        if [ $branch = 'release-3.4' ] ; then
+            gitbranch='release/3.4'
+        else
+            gitbranch=$branch
+        fi
+    
+        git pull origin $gitbranch
+
+        # update commit hash
+        api_rev=$(git rev-parse --short HEAD)
+        date=$(git log -1 | grep Date)
+    popd
+    
+    powertools_dir=cloud-backend-$branch/powertools
+
+    rm -rf $powertools_dir
+    cp -R candi_powertools_app/build $powertools_dir
+
+    echo "<!-- candicontrols/cloud-backend $branch $api_rev $date -->" \
+        >> $powertools_dir/index.html
+
+    rsync --links --recursive --checksum --exclude='*.git*' cloud-backend-$branch/* PublicWeb-$branch
+
+    pushd PublicWeb-$branch
+        svn st
+        # add new files
+        for f in `svn st | grep '^\?' | cut -d ' ' -f 8`; do
+            echo "svn add \"$f\""
+            svn add "$f"
+        done
+        # delete deleted files
+        # for f in `svn st | grep '^\?' | cut -d ' ' -f 8`; do
+        #     echo "svn add \"$f\""
+        #     svn add "$f"
+        # done
+        msg="adding all changes from git $gitbranch"
+        echo "$msg"
+        time svn commit -m "$msg"
+    popd
+done
+
+popd
+

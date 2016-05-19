@@ -1,0 +1,29 @@
+#!/bin/bash
+
+branch=removemongo
+
+echo "Updating $branch..."
+date
+
+pushd /home/kevinc/git-svn
+
+pushd cloud-backend-$branch
+   git pull origin feature/remove-mongo-cherrypick
+popd
+
+rsync -l --recursive --exclude='*.git*' cloud-backend-$branch/* PublicWeb-$branch
+
+pushd PublicWeb-$branch
+    svn st
+    # add new files
+    for f in `svn st | grep '^\?' | cut -d ' ' -f 8`; do
+        echo "svn add \"$f\""
+        svn add "$f"
+    done
+    msg="adding all changes from git $branch"
+    echo "$msg"
+    time svn commit -m "$msg"
+popd
+
+popd
+

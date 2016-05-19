@@ -1,0 +1,6 @@
+*.log
+*.tar
+*.gz
+cloud-backend-*
+PublicWeb*
+candi_powertools_app
