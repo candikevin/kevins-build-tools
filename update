@@ -2,6 +2,10 @@
 
 echo "Updating git-svn..."
 date
+echo "PATH is $PATH"
+
+# semi-horrible PATH hack
+export PATH="/home/kevinc/node/node-v4.4.1-linux-x64/bin:$PATH"
 
 pushd /home/kevinc/git-svn
 
@@ -42,9 +46,15 @@ for branch in develop release-3.4; do
     echo "<!-- candicontrols/cloud-backend $branch $api_rev $date -->" \
         >> $powertools_dir/index.html
 
+    # update the PublicWeb before the rsync
+    pushd PublicWeb-$branch
+        svn up
+    popd
+
     rsync --links --recursive --checksum --exclude='*.git*' cloud-backend-$branch/* PublicWeb-$branch
 
     pushd PublicWeb-$branch
+        svn up
         svn st
         # add new files
         for f in `svn st | grep '^\?' | cut -d ' ' -f 8`; do
@@ -64,3 +74,5 @@ done
 
 popd
 
+echo "Finished updating git-svn."
+date
